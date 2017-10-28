@@ -98,15 +98,3 @@ def get_weather_with_param(param, date, timestamp):
 if __name__ == '__main__':
     sample_data = get_sample_data()
     app.run(debug=True)
-
-    
-
-
-
-
-
-
-
-
-
-
