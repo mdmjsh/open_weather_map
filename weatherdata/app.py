@@ -1,5 +1,5 @@
 
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 import json
 import pdb
 import requests
@@ -49,9 +49,11 @@ def filter_date_time(date, timestamp):
         match_time = item['dt_txt'].split()[1] == timestamp
         if match_date and match_time:
             results.append(item)
+    if not results: 
+        results = [{"status": "error", "message": "No data for {}{}{}".format(date, ' ', timestamp)}]
     return results
 
-def convert_temperate(temperature):
+def convert_temperate(temperature, unit):
     '''
     Converts Kelvin to Celius by by minusing 273 and rounding to the nearest int
     INPUTS: 
@@ -59,11 +61,20 @@ def convert_temperate(temperature):
     RETURNS:
         temperature(int) - Celius
     '''
-    return ceil(temperature - 273)
+    print(unit)
+    if unit == 'celius':
+        temperature = temperature - 273
+    elif unit == 'kelvin': 
+        temperature = temperature
+    elif unit == 'fahrenheit':
+        temperature = temperature * 1.8 - 459.67
+    else: 
+        return {"status": "error", "message": "Invalid temperature unit {} specified".format(unit)}
+    return ceil(temperature)
 
 
 @app.route('/weather/api/v1.0/london/<string:date>/<string:timestamp>', methods=['GET'])
-def get_weather_summary(date, timestamp):
+def get_weather_summary(date, timestamp, unit='celius'):
     '''
     GET route - Summary data returning full JSON response for the date/timestamp params
     INPUTS: 
@@ -72,29 +83,34 @@ def get_weather_summary(date, timestamp):
     RETURNS: 
         results(JSON) JSON object of matching results
     '''
+    if 'unit' in request.args:
+        unit = request.args['unit']
     results = filter_date_time(date, timestamp)
-    if results: 
-        for result in results: 
-            result['main']['temp'] = convert_temperate(result['main']['temp'])
-    else: 
-        results = [{"status": "error", "message": "No data for {}{}{}".format(date, ' ', timestamp)}]
+    if 'status' not in results[0]:          # if results were found for the date
+            results[0]['main']['temp'] = convert_temperate(results[0]['main']['temp'], unit)
     return jsonify(results)
 
 
 @app.route('/weather/api/v1.0/london/<string:date>/<string:timestamp>/<string:param>', methods=['GET'])
 def get_weather_with_param(param, date, timestamp):
     '''
-    GET route - Returns only the specified param from filtered results
+    GET route - Returns only the specified param from filtered results - returns an error is the date/time is not in JSON or the param is not in the JSON 
+    INPUTS: 
+        param(str): string of param to filter 
+        date(str) - format: yyyy-mm-dd (2017-10-28)
+        timestamp(str) - format: hh:mm:ss (18:00:00)
+    RETURNS: 
+        results(JSON) JSON object of matching results
     '''
     results = filter_date_time(date, timestamp)
-    if results:
+    if 'status' not in results[0]:              # if results were found for the date
         if param in results[0]['main']:
             results = {param: str(results[0]['main'][param])}
-        else: 
-            results = [{"status": "error", "message": "{} not found in response for {}{}{}".format(param, date, ' ', timestamp)}]
     return jsonify(results)
 
 
 if __name__ == '__main__':
     sample_data = get_sample_data()
     app.run(debug=True)
+
+
