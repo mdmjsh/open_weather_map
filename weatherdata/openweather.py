@@ -13,7 +13,7 @@ def get_sample_data():
     RETURNS: 
         sample_data(dict) dictionary constructed from sample_data.json
     '''
-    with open('sample_data.json') as data_file:
+    with open('/weatherdata/sample_data.json') as data_file:
         data_string = data_file.read()    
         try:
             sample_data = json.loads(data_string)
@@ -54,6 +54,7 @@ def filter_date_time(date, timestamp):
     if not results: 
         results = [{"status": "error", "message": "No data for {}{}{}".format(date, ' ', timestamp)}]
     return results
+
 
 def convert_temperate(temperature, unit):
     '''
