@@ -27,11 +27,12 @@ def get_sample_data():
 @app.route('/weather/api/v1.0/london/full', methods=['GET'])
 def get_full_data():
     '''
+
     GET route - returns full sample data as JSON object
     RETURNS: 
         sample_data(JSON) - unfiltered JSON object
     '''
-    return jsonify(sample_data)
+    return jsonify(get_sample_data())
 
 
 def filter_date_time(date, timestamp):
@@ -43,6 +44,7 @@ def filter_date_time(date, timestamp):
     RETURNS: 
         results(list) - list of results or empty list
     '''
+    sample_data = get_sample_data()
     results = []
     for item in sample_data:
         match_date = item['dt_txt'].split()[0] == date
@@ -83,6 +85,7 @@ def get_weather_summary(date, timestamp, unit='celius'):
     RETURNS: 
         results(JSON) JSON object of matching results
     '''
+    sample_data = get_sample_data()
     if 'unit' in request.args:          # Check if the unit arg has been sent in
         unit = request.args['unit']
     results = filter_date_time(date, timestamp)
@@ -103,14 +106,16 @@ def get_weather_with_param(param, date, timestamp):
         results(JSON) JSON object of matching results
     '''
     results = filter_date_time(date, timestamp)
+    sample_data = get_sample_data()
     if 'status' not in results[0]:              # if results were found for the date
         if param in results[0]['main']:
             results = {param: str(results[0]['main'][param])}
+        else: 
+            results = {"status": "error", "message": "Invalid paramater {} specified".format(param)}
     return jsonify(results)
 
 
 if __name__ == '__main__':
-    sample_data = get_sample_data()
     app.run(debug=True)
 
 
