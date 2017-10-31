@@ -25,7 +25,7 @@ def get_sample_data():
 
 
 @app.route('/weather/api/v1.0/london/full', methods=['GET'])
-def get_full_data():
+def get_full_data():    
     '''
 
     GET route - returns full sample data as JSON object
@@ -116,6 +116,6 @@ def get_weather_with_param(param, date, timestamp):
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port='5000')
 
 
