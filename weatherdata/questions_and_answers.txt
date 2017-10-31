@@ -1,0 +1,66 @@
+Questions:
+
+ 1) - If I wanted the temperature in Kelvin rather than celcius, how could I specify this in API calls?
+The get_weather_summary function takes the argument ‘unit’. By default this is set to celius so the user does not need to send it in with every request, however if they were to make a request in which the ‘unit’ argument is is specified this would be handled: 
+
+curl -i http://localhost:5000/weather/api/v1.0/london/2017-11-02/15:00:00?unit=Kelvin
+
+Allowed parameters: fahrenheit, kelvin, celius(default). 
+
+ 2) - How would you test this REST service?
+Using the python standard library package ‘unittest’. As Per the example laid out at: http://flask.pocoo.org/docs/0.12/testing/. A separate unit test file can be created which calls the routes and functions within the application. I created the file unit_test.py - this has 90% coverage of the application and a 100% success rate. This is the same directory as the main app openweather.py, and can be invoked in the standard way 'python unit_test.py'
+
+ 3) - How would you check the code coverage of your tests?
+This can be automated using the coverage package. Firstly, ‘pip install coverage’, and then run the unit test module through the coverage package as follows (assuming you are currently in the directory containing the unit_test.py file): 
+
+coverage run --source  . unit_test.py
+coverage report -m
+
+Name             Stmts   Miss  Cover   Missing
+----------------------------------------------
+__init__.py          0      0   100%
+openweather.py      58      6    90%   21-23, 35, 90, 119
+unit_test.py        41      0   100%
+----------------------------------------------
+TOTAL               99      6    94%
+
+ 4) - How could the API be documented for third-parties to use?
+
+The ‘swagger’ framework(https://swagger.io/) is the defacto documentation library for RESTful APIs.  It utilises the OpenAPISpecification (https://github.com/OAI/OpenAPI-Specification) to provide standardised documentation of the various requests, endpoints, responses and datatypes that are included in an API. 
+
+The library flask-restful-swagger (https://github.com/rantav/flask-restful-swagger) provides a wrapper to flask-restful and enables full support for the swagger framework, enabling the programmer to dynamically build out a JSON documentation of the API and as part of the program, and providing a well structured and formatted interface to the client available over HTTP.
+
+
+5) - How would you restrict access to this API?
+
+There are various token based authentication methods for RESTful services such as Oauth[1/2] or JWT (https://jwt.io/) in which the user has to register their application and be provided with an authentication token.  This token then must be sent in as a parameter with every request in order to authenticate the request, as RESTful APIs do not strictly allow for stateful authentication in the same way that web applications do. 
+
+The library flask-jwt-auth (https://realpython.com/blog/python/token-based-authentication-with-flask/) is a conduit to generating JWT tokens to an authorised user, enabling them to authenticate themselves to the application. 
+
+6) - What would you suggest is needed to do daily forecast recoveries from openweather.org, keeping the web service up to date?
+
+Keeping the API up to date with the openweatherdata service would require two fundamental additional resources 1) Data ingress pipeline/ETL 2) Database / storage platform: 
+
+1) A scheduled or bootstrapped ingress data ingestion service running periodically throughout the day and hitting the openweathermap API. This would ensure that our internal storage had the most recent weather data available. 
+
+2) A database or storage engine. There are two option here: If a database were to be used, a relational schema could be defined to store the datapoints of relevance to our application. ETL would be performed in the ingress stage to transform the third party to fit our schema before saving into the database. This is advantages as it allows for enforcing of referenctial integrity.
+
+The second option would be using a document storage platform such as AWS S3 buckets. Given that the data is already available in JSON format, if there was not a clear business case for translating it into a relational schema, then a documentation storage solution may represent a fine option. 
+
+One of the main benefits of storing the data in an RDBMS would be the ease of accessing and analysing the data via SQL, as compared to parsing JSON documents. However, the trade off for this is maintaining the relational schema and ensuring data integrity during the ETL process. The correct route to take here would be decided by the requirements of the application. 
+
+
+IMPROVEMENTS: 
+
+- Curerntly, the sample_data object is created up each method that uses it in the application. Whilst it is possible to instantiating sample_data as a global variable rather than recreating in each method this caused Namespace errors when running unit tests. A potential improvement would be to over come this by using a package such as mock to handle mocking a toy example for the JSON object in the unit tests, enabling the object to be kept as a global variable. 
+
+- Allow for full querying of all areas of the JSON reponse (not just those in the 'main' object)
+- Allow sending in the city as a parameter 
+- Allow querying across dates for a certain parameter, mimicing a SELECT [] FROM [] WHERE sql query.
+e.g. find all dates where the humidity was greater than 60% could potentially take the following form:  
+
+curl -i http://0.0.0.0:5000/weather/api/v1.0/london/?filter_by=humidity&gt=60
+
+
+
+
