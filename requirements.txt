@@ -3,4 +3,4 @@ Flask-Cors==3.0.3
 Flask-HTTPAuth==3.2.3
 Flask-RESTful==0.3.6
 flask-restful-swagger==0.19
-requests==2.18.4
+requests==2.20.0
